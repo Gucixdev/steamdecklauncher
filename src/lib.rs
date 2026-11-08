@@ -1,4 +1,4 @@
-//! steamdeck: ProtonUp and Flatseal in one crate, one `src`, one window layout (see `ui`).
+//! steamdecklauncher: ProtonUp and Flatseal in one crate, one `src`, one window layout (see `ui`).
 //! The two programs are thin binaries (`protonup.rs`, `flatseal.rs`); everything else is shared here.
 //! No Qt, no Python, no GTK: iced for the windows, ureq + rustls for HTTP, flate2/lzma-rust2 + tar for
 //! archives.

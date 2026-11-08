@@ -10,14 +10,14 @@ struct Env {
 impl Env {
     fn new(name: &str) -> Env {
         let home =
-            std::env::temp_dir().join(format!("steamdeck-cli-{name}-{}", std::process::id()));
+            std::env::temp_dir().join(format!("steamdecklauncher-cli-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&home);
         std::fs::create_dir_all(home.join("bin")).unwrap();
         Env { home }
     }
 
     fn run(&self, args: &[&str]) -> Output {
-        Command::new(env!("CARGO_BIN_EXE_steamdeck"))
+        Command::new(env!("CARGO_BIN_EXE_steamdecklauncher"))
             .args(args)
             .env_clear()
             .env("HOME", &self.home)
@@ -58,7 +58,7 @@ fn help_and_version_and_unknown_commands() {
     assert!(out(&o).contains("protonup"));
     let o = e.run(&["--version"]);
     assert_eq!(code(&o), 0);
-    assert!(out(&o).starts_with("steamdeck 0."), "{}", out(&o));
+    assert!(out(&o).starts_with("steamdecklauncher 0."), "{}", out(&o));
     let o = e.run(&["bogus"]);
     assert_eq!(code(&o), 2, "an unknown word must not open the window");
     assert!(err(&o).contains("unknown command"));
@@ -225,7 +225,7 @@ fn use_while_steam_runs_changes_nothing() {
         .join("compatibilitytools.d")
         .to_string_lossy()
         .to_string();
-    let o = Command::new(env!("CARGO_BIN_EXE_steamdeck"))
+    let o = Command::new(env!("CARGO_BIN_EXE_steamdecklauncher"))
         .args(["protonup", "use", "570", "default", "--dir", &d])
         .env_clear()
         .env("HOME", &e.home)

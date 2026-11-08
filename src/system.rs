@@ -165,7 +165,7 @@ impl State {
 /// Run `setup --system ARGS` and return (what was run, its output). `status` needs no root.
 fn run_actions(args: Vec<String>) -> (String, String) {
     let label = args.join(" ");
-    let script = std::env::temp_dir().join(format!("steamdeck-setup-{}.sh", std::process::id()));
+    let script = std::env::temp_dir().join(format!("steamdecklauncher-setup-{}.sh", std::process::id()));
     if let Err(e) = std::fs::write(&script, SETUP) {
         return (label, format!("could not write {}: {e}", script.display()));
     }

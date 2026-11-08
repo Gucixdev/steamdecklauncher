@@ -6,7 +6,7 @@ setup() {
 	T=$(mktemp -d)
 	DIST=$T/dist
 	mkdir -p "$DIST" "$T/home"
-	printf '#!/bin/sh\necho steamdeck-fake "$@"\n' > "$DIST/steamdeck-x86_64-linux"
+	printf '#!/bin/sh\necho steamdecklauncher-fake "$@"\n' > "$DIST/steamdecklauncher-x86_64-linux"
 	chmod +x "$DIST"/*
 	(cd "$DIST" && sha256sum -- *-x86_64-linux > SHA256SUMS)
 	export HOME=$T/home XDG_CONFIG_HOME=$T/home/.config XDG_STATE_HOME=$T/home/state STEAMDECK_NO_SYSTEMD=1
@@ -17,24 +17,24 @@ teardown() { rm -rf "$T"; }
 @test "installs the program, the protonup and flatseal names, the menu entry and the icon" {
 	run "$ROOT/setup" --programs --from "$DIST" --prefix "$T/p"
 	[ "$status" -eq 0 ]
-	[ -x "$T/p/bin/steamdeck" ]
-	[ "$("$T/p/bin/steamdeck")" = steamdeck-fake ]
-	[ "$(readlink "$T/p/bin/protonup")" = steamdeck ]
-	[ "$(readlink "$T/p/bin/flatseal")" = steamdeck ]
-	grep -q "^Exec=$T/p/bin/steamdeck protonup gui$" "$T/p/share/applications/steamdeck-protonup.desktop"
-	grep -q "^Exec=$T/p/bin/steamdeck flatseal gui$" "$T/p/share/applications/steamdeck-flatseal.desktop"
-	grep -q '^Name=ProtonUp$' "$T/p/share/applications/steamdeck-protonup.desktop"
-	grep -q '^Name=Flatseal$' "$T/p/share/applications/steamdeck-flatseal.desktop"
-	grep -q '<svg' "$T/p/share/icons/hicolor/scalable/apps/steamdeck-protonup.svg"
-	[ ! -e "$T/p/share/applications/steamdeck.desktop" ]
+	[ -x "$T/p/bin/steamdecklauncher" ]
+	[ "$("$T/p/bin/steamdecklauncher")" = steamdecklauncher-fake ]
+	[ "$(readlink "$T/p/bin/protonup")" = steamdecklauncher ]
+	[ "$(readlink "$T/p/bin/flatseal")" = steamdecklauncher ]
+	grep -q "^Exec=$T/p/bin/steamdecklauncher protonup gui$" "$T/p/share/applications/steamdecklauncher-protonup.desktop"
+	grep -q "^Exec=$T/p/bin/steamdecklauncher flatseal gui$" "$T/p/share/applications/steamdecklauncher-flatseal.desktop"
+	grep -q '^Name=ProtonUp$' "$T/p/share/applications/steamdecklauncher-protonup.desktop"
+	grep -q '^Name=Flatseal$' "$T/p/share/applications/steamdecklauncher-flatseal.desktop"
+	grep -q '<svg' "$T/p/share/icons/hicolor/scalable/apps/steamdecklauncher-protonup.svg"
+	[ ! -e "$T/p/share/applications/steamdecklauncher.desktop" ]
 }
 
 @test "a tampered binary is refused and nothing is installed" {
-	echo tampered >> "$DIST/steamdeck-x86_64-linux"
+	echo tampered >> "$DIST/steamdecklauncher-x86_64-linux"
 	run "$ROOT/setup" --programs --from "$DIST" --prefix "$T/p"
 	[ "$status" -ne 0 ]
 	[[ "$output" == *"checksum mismatch"* ]]
-	[ ! -e "$T/p/bin/steamdeck" ]
+	[ ! -e "$T/p/bin/steamdecklauncher" ]
 }
 
 @test "a binary missing from SHA256SUMS is refused" {
@@ -53,16 +53,16 @@ teardown() { rm -rf "$T"; }
 @test "--no-desktop writes only the binary and the names" {
 	run "$ROOT/setup" --programs --from "$DIST" --prefix "$T/p" --no-desktop
 	[ "$status" -eq 0 ]
-	[ -x "$T/p/bin/steamdeck" ]
+	[ -x "$T/p/bin/steamdecklauncher" ]
 	[ ! -e "$T/p/share" ]
 }
 
 @test "--local copies your own build and skips it when unchanged" {
 	mkdir -p "$T/build"
-	printf '#!/bin/sh\necho local\n' > "$T/build/steamdeck"; chmod +x "$T/build/steamdeck"
+	printf '#!/bin/sh\necho local\n' > "$T/build/steamdecklauncher"; chmod +x "$T/build/steamdecklauncher"
 	run "$ROOT/setup" --programs --local "$T/build" --prefix "$T/p"
 	[ "$status" -eq 0 ]
-	[ "$("$T/p/bin/steamdeck")" = local ]
+	[ "$("$T/p/bin/steamdecklauncher")" = local ]
 	run "$ROOT/setup" --programs --local "$T/build" --prefix "$T/p"
 	[[ "$output" == *"is up to date"* ]]
 }
@@ -70,7 +70,7 @@ teardown() { rm -rf "$T"; }
 @test "--timer writes the weekly update unit" {
 	run "$ROOT/setup" --programs --from "$DIST" --prefix "$T/p" --timer
 	[ "$status" -eq 0 ]
-	grep -q "^ExecStart=$T/p/bin/steamdeck protonup update$" "$T/home/.config/systemd/user/protonup-update.service"
+	grep -q "^ExecStart=$T/p/bin/steamdecklauncher protonup update$" "$T/home/.config/systemd/user/protonup-update.service"
 	grep -q '^OnCalendar=weekly$' "$T/home/.config/systemd/user/protonup-update.timer"
 }
 
@@ -78,10 +78,10 @@ teardown() { rm -rf "$T"; }
 	"$ROOT/setup" --programs --from "$DIST" --prefix "$T/p" --timer >/dev/null
 	run "$ROOT/setup" --programs --uninstall --prefix "$T/p"
 	[ "$status" -eq 0 ]
-	[ ! -e "$T/p/bin/steamdeck" ]
+	[ ! -e "$T/p/bin/steamdecklauncher" ]
 	[ ! -e "$T/p/bin/protonup" ]
-	[ ! -e "$T/p/share/applications/steamdeck-protonup.desktop" ]
-	[ ! -e "$T/p/share/applications/steamdeck-flatseal.desktop" ]
+	[ ! -e "$T/p/share/applications/steamdecklauncher-protonup.desktop" ]
+	[ ! -e "$T/p/share/applications/steamdecklauncher-flatseal.desktop" ]
 	[ ! -e "$T/home/.config/systemd/user/protonup-update.timer" ]
 }
 
@@ -95,7 +95,7 @@ teardown() { rm -rf "$T"; }
 	grep -q 'my.own' "$P/user.js"
 	grep -q 'toolkit.telemetry.enabled", false' "$P/user.js"
 	FIREFOX_PROFILE="$P" "$ROOT/setup" --firefox >/dev/null
-	[ "$(grep -c '>>> steamdeck setup' "$P/user.js")" -eq 1 ]
+	[ "$(grep -c '>>> steamdecklauncher setup' "$P/user.js")" -eq 1 ]
 }
 
 # ---- safety: nothing that is not ours is overwritten or removed ----------------------------------
@@ -109,7 +109,7 @@ teardown() { rm -rf "$T"; }
 	[ "$("$T/p/bin/protonup")" = mine ]
 	run "$ROOT/setup" --programs --uninstall --prefix "$T/p"
 	[ "$("$T/p/bin/protonup")" = mine ]
-	[ ! -e "$T/p/bin/steamdeck" ]
+	[ ! -e "$T/p/bin/steamdecklauncher" ]
 }
 
 @test "uninstall leaves every unrelated file in bin, applications and icons" {
@@ -130,7 +130,7 @@ teardown() { rm -rf "$T"; }
 	run "$ROOT/setup" --programs --from "$DIST" --prefix "$T/p"
 	[ "$status" -eq 0 ]
 	[ "$(cat "$T/p/bin/something")" = keep ]
-	[ "$(readlink "$T/p/bin/protonup")" = steamdeck ]
+	[ "$(readlink "$T/p/bin/protonup")" = steamdecklauncher ]
 }
 
 @test "the firefox step touches only the chosen profile and keeps its other files" {
@@ -147,9 +147,9 @@ teardown() { rm -rf "$T"; }
 	printf '// my own\nuser_pref("my.own", 1);\n' > "$P/user.js"
 	cp "$P/user.js" "$T/orig"
 	FIREFOX_PROFILE="$P" "$ROOT/setup" --firefox >/dev/null
-	cmp "$P/user.js.steamdeck-bak" "$T/orig"
+	cmp "$P/user.js.steamdecklauncher-bak" "$T/orig"
 	FIREFOX_PROFILE="$P" "$ROOT/setup" --firefox >/dev/null
-	cmp "$P/user.js.steamdeck-bak" "$T/orig"   # the backup is the original, not the second run
+	cmp "$P/user.js.steamdecklauncher-bak" "$T/orig"   # the backup is the original, not the second run
 	grep -q '^// my own$' "$P/user.js"
 	grep -q 'user_pref("my.own", 1);' "$P/user.js"
 }
@@ -165,7 +165,7 @@ teardown() { rm -rf "$T"; }
 	[ "$status" -eq 0 ]
 	unit=$T/home/.config/systemd/user/protonup-update.service
 	exec_line=$(grep '^ExecStart=' "$unit")
-	[ "$exec_line" = "ExecStart=$T/p/bin/steamdeck protonup update" ]
+	[ "$exec_line" = "ExecStart=$T/p/bin/steamdecklauncher protonup update" ]
 	grep -q 'protonup update' "$ROOT/src/cli_protonup.rs"
 	grep -q '^OnCalendar=weekly' "$T/home/.config/systemd/user/protonup-update.timer"
 }
@@ -177,17 +177,17 @@ teardown() { rm -rf "$T"; }
 @test "a prefix with a space gives a menu entry that still starts the program" {
 	run "$ROOT/setup" --programs --from "$DIST" --prefix "$T/my prefix"
 	[ "$status" -eq 0 ]
-	[ -x "$T/my prefix/bin/steamdeck" ]
-	grep -q "^Exec=\"$T/my prefix/bin/steamdeck\" protonup gui$" "$T/my prefix/share/applications/steamdeck-protonup.desktop"
+	[ -x "$T/my prefix/bin/steamdecklauncher" ]
+	grep -q "^Exec=\"$T/my prefix/bin/steamdecklauncher\" protonup gui$" "$T/my prefix/share/applications/steamdecklauncher-protonup.desktop"
 }
 
 @test "installing over a running program works and leaves no temporary file" {
 	run "$ROOT/setup" --programs --from "$DIST" --prefix "$T/p"
 	[ "$status" -eq 0 ]
-	cp "$T/p/bin/steamdeck" "$T/running"
-	printf '#!/bin/sh\nsleep 5\n' > "$DIST/steamdeck-x86_64-linux"
+	cp "$T/p/bin/steamdecklauncher" "$T/running"
+	printf '#!/bin/sh\nsleep 5\n' > "$DIST/steamdecklauncher-x86_64-linux"
 	(cd "$DIST" && sha256sum -- *-x86_64-linux > SHA256SUMS)
-	"$T/p/bin/steamdeck" & pid=$!
+	"$T/p/bin/steamdecklauncher" & pid=$!
 	run "$ROOT/setup" --programs --from "$DIST" --prefix "$T/p"
 	kill "$pid" 2>/dev/null || true
 	[ "$status" -eq 0 ]
@@ -204,13 +204,13 @@ teardown() { rm -rf "$T"; }
 @test "an unknown word in programs mode is reported" {
 	run "$ROOT/setup" --programs --from "$DIST" --prefix "$T/p" nonsense
 	[ "$status" -ne 0 ]
-	[ ! -e "$T/p/bin/steamdeck" ]
+	[ ! -e "$T/p/bin/steamdecklauncher" ]
 }
 
 @test "a checksum file with Windows line endings is refused clearly, not installed" {
 	sed -i 's/$/\r/' "$DIST/SHA256SUMS"
 	run "$ROOT/setup" --programs --from "$DIST" --prefix "$T/p"
-	[ ! -e "$T/p/bin/steamdeck" ] || [ "$status" -eq 0 ]
+	[ ! -e "$T/p/bin/steamdecklauncher" ] || [ "$status" -eq 0 ]
 }
 
 @test "uninstall twice and uninstall with nothing installed are harmless" {
@@ -224,9 +224,9 @@ teardown() { rm -rf "$T"; }
 
 @test "an entry left by the older single-window version is replaced, not kept next to the new ones" {
 	mkdir -p "$T/p/share/applications"
-	printf '[Desktop Entry]\nName=Steam Deck\n' > "$T/p/share/applications/steamdeck.desktop"
+	printf '[Desktop Entry]\nName=Steam Deck\n' > "$T/p/share/applications/steamdecklauncher.desktop"
 	run "$ROOT/setup" --programs --from "$DIST" --prefix "$T/p"
 	[ "$status" -eq 0 ]
-	[ ! -e "$T/p/share/applications/steamdeck.desktop" ]
-	[ -f "$T/p/share/applications/steamdeck-protonup.desktop" ]
+	[ ! -e "$T/p/share/applications/steamdecklauncher.desktop" ]
+	[ -f "$T/p/share/applications/steamdecklauncher-protonup.desktop" ]
 }

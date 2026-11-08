@@ -11,10 +11,10 @@ teardown() { rm -rf "$T"; }
 @test "oom writes the oomd configuration and enables the daemon" {
 	run "$ROOT/setup" --system --root "$T" oom
 	[ "$status" -eq 0 ]
-	grep -q '^SwapUsedLimit=90%$' "$T/etc/systemd/oomd.conf.d/10-steamdeck.conf"
-	grep -q '^ManagedOOMSwap=kill$' "$T/etc/systemd/system/-.slice.d/10-steamdeck-oomd.conf"
-	grep -q '^ManagedOOMMemoryPressure=kill$' "$T/etc/systemd/system/user@.service.d/10-steamdeck-oomd.conf"
-	grep -q '^ManagedOOMPreference=avoid$' "$T/etc/systemd/user/gamescope-session-plus@.service.d/10-steamdeck-oomd.conf"
+	grep -q '^SwapUsedLimit=90%$' "$T/etc/systemd/oomd.conf.d/10-steamdecklauncher.conf"
+	grep -q '^ManagedOOMSwap=kill$' "$T/etc/systemd/system/-.slice.d/10-steamdecklauncher-oomd.conf"
+	grep -q '^ManagedOOMMemoryPressure=kill$' "$T/etc/systemd/system/user@.service.d/10-steamdecklauncher-oomd.conf"
+	grep -q '^ManagedOOMPreference=avoid$' "$T/etc/systemd/user/gamescope-session-plus@.service.d/10-steamdecklauncher-oomd.conf"
 	[[ "$output" == *"+ systemctl enable --now systemd-oomd.service"* ]]
 }
 
@@ -22,7 +22,7 @@ teardown() { rm -rf "$T"; }
 	"$ROOT/setup" --system --root "$T" all >/dev/null
 	n=0
 	while IFS= read -r f; do
-		head -1 "$f" | grep -q '^# managed by steamdeck/setup$'
+		head -1 "$f" | grep -q '^# managed by steamdecklauncher/setup$'
 		n=$((n + 1))
 	done < <(find "$T" -type f)
 	[ "$n" -eq 5 ]
@@ -31,17 +31,17 @@ teardown() { rm -rf "$T"; }
 @test "sysctl takes the swappiness" {
 	run "$ROOT/setup" --system --root "$T" sysctl --swappiness 60
 	[ "$status" -eq 0 ]
-	grep -q '^vm.swappiness = 60$' "$T/etc/sysctl.d/99-steamdeck-setup.conf"
-	grep -q '^vm.page-cluster = 0$' "$T/etc/sysctl.d/99-steamdeck-setup.conf"
+	grep -q '^vm.swappiness = 60$' "$T/etc/sysctl.d/99-steamdecklauncher-setup.conf"
+	grep -q '^vm.page-cluster = 0$' "$T/etc/sysctl.d/99-steamdecklauncher-setup.conf"
 }
 
 @test "a file this script did not write is left alone" {
 	mkdir -p "$T/etc/sysctl.d"
-	printf 'vm.swappiness = 10\n' > "$T/etc/sysctl.d/99-steamdeck-setup.conf"
+	printf 'vm.swappiness = 10\n' > "$T/etc/sysctl.d/99-steamdecklauncher-setup.conf"
 	run "$ROOT/setup" --system --root "$T" sysctl
 	[ "$status" -eq 0 ]
-	[[ "$output" == *"skip /etc/sysctl.d/99-steamdeck-setup.conf"* ]]
-	[ "$(cat "$T/etc/sysctl.d/99-steamdeck-setup.conf")" = 'vm.swappiness = 10' ]
+	[[ "$output" == *"skip /etc/sysctl.d/99-steamdecklauncher-setup.conf"* ]]
+	[ "$(cat "$T/etc/sysctl.d/99-steamdecklauncher-setup.conf")" = 'vm.swappiness = 10' ]
 }
 
 @test "undo removes exactly the managed files" {
@@ -49,15 +49,15 @@ teardown() { rm -rf "$T"; }
 	printf 'keep\n' > "$T/etc/sysctl.d/50-mine.conf"
 	run "$ROOT/setup" --system --root "$T" undo
 	[ "$status" -eq 0 ]
-	[ ! -e "$T/etc/systemd/oomd.conf.d/10-steamdeck.conf" ]
-	[ ! -e "$T/etc/sysctl.d/99-steamdeck-setup.conf" ]
+	[ ! -e "$T/etc/systemd/oomd.conf.d/10-steamdecklauncher.conf" ]
+	[ ! -e "$T/etc/sysctl.d/99-steamdecklauncher-setup.conf" ]
 	[ -f "$T/etc/sysctl.d/50-mine.conf" ]
 }
 
 @test "--dry-run writes nothing" {
 	run "$ROOT/setup" --system --root "$T" --dry-run all
 	[ "$status" -eq 0 ]
-	[[ "$output" == *"would write /etc/systemd/oomd.conf.d/10-steamdeck.conf"* ]]
+	[[ "$output" == *"would write /etc/systemd/oomd.conf.d/10-steamdecklauncher.conf"* ]]
 	[ -z "$(find "$T" -type f)" ]
 }
 
@@ -86,8 +86,8 @@ teardown() { rm -rf "$T"; }
 	"$ROOT/setup" --system --root "$T" oom >/dev/null
 	run "$ROOT/setup" --system --root "$T" status
 	[ "$status" -eq 0 ]
-	[[ "$output" == *"present  /etc/systemd/oomd.conf.d/10-steamdeck.conf"* ]]
-	[[ "$output" == *"absent   /etc/sysctl.d/99-steamdeck-setup.conf"* ]]
+	[[ "$output" == *"present  /etc/systemd/oomd.conf.d/10-steamdecklauncher.conf"* ]]
+	[[ "$output" == *"absent   /etc/sysctl.d/99-steamdecklauncher-setup.conf"* ]]
 }
 
 # ---- safety ---------------------------------------------------------------------------------------
@@ -98,7 +98,7 @@ teardown() { rm -rf "$T"; }
 	[ "$status" -eq 0 ]
 	after=$(ls -la /etc/sysctl.d /etc/systemd 2>/dev/null | md5sum)
 	[ "$before" = "$after" ]
-	[ -e "$T/etc/sysctl.d/99-steamdeck-setup.conf" ]
+	[ -e "$T/etc/sysctl.d/99-steamdecklauncher-setup.conf" ]
 }
 
 @test "an existing managed file is replaced as a whole, an unmanaged one in the same directory is not touched" {
@@ -107,8 +107,8 @@ teardown() { rm -rf "$T"; }
 	"$ROOT/setup" --system --root "$T" sysctl >/dev/null
 	"$ROOT/setup" --system --root "$T" --swappiness 70 sysctl >/dev/null
 	[ "$(cat "$T/etc/sysctl.d/10-mine.conf")" = 'vm.swappiness = 5' ]
-	grep -q '^vm.swappiness = 70$' "$T/etc/sysctl.d/99-steamdeck-setup.conf"
-	[ "$(grep -c swappiness "$T/etc/sysctl.d/99-steamdeck-setup.conf")" -eq 1 ]
+	grep -q '^vm.swappiness = 70$' "$T/etc/sysctl.d/99-steamdecklauncher-setup.conf"
+	[ "$(grep -c swappiness "$T/etc/sysctl.d/99-steamdecklauncher-setup.conf")" -eq 1 ]
 }
 
 @test "undo twice and undo with nothing written are harmless" {
@@ -132,8 +132,8 @@ teardown() { rm -rf "$T"; }
 	run "$ROOT/setup" --system --root "$T" trim coredump
 	[ "$status" -eq 0 ]
 	[[ "$output" == *"enable --now fstrim.timer"* ]]
-	grep -q '^Storage=none$' "$T/etc/systemd/coredump.conf.d/10-steamdeck.conf"
-	head -1 "$T/etc/systemd/coredump.conf.d/10-steamdeck.conf" | grep -q 'managed by steamdeck/setup'
+	grep -q '^Storage=none$' "$T/etc/systemd/coredump.conf.d/10-steamdecklauncher.conf"
+	head -1 "$T/etc/systemd/coredump.conf.d/10-steamdecklauncher.conf" | grep -q 'managed by steamdecklauncher/setup'
 	run "$ROOT/setup" --system --root "$T" undo
-	[ ! -e "$T/etc/systemd/coredump.conf.d/10-steamdeck.conf" ]
+	[ ! -e "$T/etc/systemd/coredump.conf.d/10-steamdecklauncher.conf" ]
 }

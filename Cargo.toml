@@ -1,17 +1,17 @@
 [package]
-name = "steamdeck"
+name = "steamdecklauncher"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
 authors = ["Gucixdev"]
-repository = "https://github.com/Gucixdev/steamdeck"
+repository = "https://github.com/Gucixdev/steamdecklauncher"
 description = "ProtonUp and Flatseal for the Steam Deck as single binaries"
 
 [lib]
 path = "src/lib.rs"
 
 [[bin]]
-name = "steamdeck"
+name = "steamdecklauncher"
 path = "src/main.rs"
 
 [dependencies]
@@ -38,7 +38,7 @@ strip = true
 [profile.dev.package."*"]
 opt-level = 3
 
-[profile.dev.package.steamdeck]
+[profile.dev.package.steamdecklauncher]
 debug = "line-tables-only"
 opt-level = 1
 

@@ -1,5 +1,5 @@
 //! Settings > Scripts: run small scripts from one place and see their output. Your own scripts are
-//! the executable files in `~/.config/steamdeck/scripts/`; a few read-only ones come with the program.
+//! the executable files in `~/.config/steamdecklauncher/scripts/`; a few read-only ones come with the program.
 //! Nothing runs without a confirmation, scripts run as you (never as root), and their output goes
 //! to the log as well.
 use crate::log;
@@ -27,7 +27,7 @@ pub enum Source {
 pub fn scripts_dir() -> PathBuf {
     dirs::config_dir()
         .unwrap_or_default()
-        .join("steamdeck/scripts")
+        .join("steamdecklauncher/scripts")
 }
 
 const BUILTINS: [(&str, &str, &str); 3] = [

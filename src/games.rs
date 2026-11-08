@@ -463,8 +463,8 @@ pub fn set_launch_options_checked(
         staged.push((path, out));
     }
     for (path, out) in staged {
-        let _ = fs::copy(&path, path.with_extension("vdf.steamdeck-bak"));
-        let tmp = path.with_extension("vdf.steamdeck-tmp");
+        let _ = fs::copy(&path, path.with_extension("vdf.steamdecklauncher-bak"));
+        let tmp = path.with_extension("vdf.steamdecklauncher-tmp");
         fs::write(&tmp, out).map_err(|e| format!("{}: {e}", tmp.display()))?;
         fs::rename(&tmp, &path).map_err(|e| format!("{}: {e}", path.display()))?;
     }
@@ -536,9 +536,9 @@ pub fn set_tool_checked(
             ));
         }
     }
-    let backup = path.with_extension("vdf.steamdeck-bak");
+    let backup = path.with_extension("vdf.steamdecklauncher-bak");
     let _ = fs::copy(&path, &backup);
-    let tmp = path.with_extension("vdf.steamdeck-tmp");
+    let tmp = path.with_extension("vdf.steamdecklauncher-tmp");
     fs::write(&tmp, serialize(&items)).map_err(|e| format!("{}: {e}", tmp.display()))?;
     fs::rename(&tmp, &path).map_err(|e| format!("{}: {e}", path.display()))
 }
@@ -581,7 +581,7 @@ mod tests {
         assert!(fs::read_to_string(config_path(&root))
             .unwrap()
             .contains("C:\\\\x"));
-        assert!(root.join("config/config.vdf.steamdeck-bak").is_file());
+        assert!(root.join("config/config.vdf.steamdecklauncher-bak").is_file());
     }
 
     #[test]
@@ -651,7 +651,7 @@ mod tests {
         assert_eq!(m.get(&4800).map(String::as_str), Some("mangohud %command%"));
         set_launch_options_checked(&root, 570, None, false).unwrap();
         assert!(!launch_options(&root).contains_key(&570));
-        assert!(cfg.join("localconfig.vdf.steamdeck-bak").is_file());
+        assert!(cfg.join("localconfig.vdf.steamdecklauncher-bak").is_file());
     }
 
     #[test]
@@ -710,10 +710,10 @@ mod tests {
         assert!(set_tool_checked(&root, 570, Some("x"), false).is_err());
         assert_eq!(fs::read_to_string(&p).unwrap(), bad);
         assert!(
-            !root.join("config/config.vdf.steamdeck-bak").exists(),
+            !root.join("config/config.vdf.steamdecklauncher-bak").exists(),
             "no backup of a file we did not change"
         );
-        assert!(!root.join("config/config.vdf.steamdeck-tmp").exists());
+        assert!(!root.join("config/config.vdf.steamdecklauncher-tmp").exists());
     }
 
     #[test]
@@ -758,7 +758,7 @@ mod tests {
         fs::write(&p, CONFIG).unwrap();
         set_tool_checked(&root, 1, Some("a"), false).unwrap();
         assert_eq!(
-            fs::read_to_string(root.join("config/config.vdf.steamdeck-bak")).unwrap(),
+            fs::read_to_string(root.join("config/config.vdf.steamdecklauncher-bak")).unwrap(),
             CONFIG
         );
         let names: Vec<String> = fs::read_dir(root.join("config"))

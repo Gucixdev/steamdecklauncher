@@ -1,4 +1,4 @@
-//! steamdeck: one program. No arguments opens the window; `protonup ...` and `flatseal ...` (or the
+//! steamdecklauncher: one program. No arguments opens the window; `protonup ...` and `flatseal ...` (or the
 //! program started under one of those names, as the symlinks `setup` makes) are the command lines.
 use std::process::ExitCode;
 
@@ -15,11 +15,11 @@ fn main() -> ExitCode {
         _ => match args.first().map(String::as_str) {
             Some("protonup") | Some("flatseal") => (args[0].clone(), args[1..].to_vec()),
             Some("--help") | Some("-h") | Some("help") => {
-                println!("steamdeck: ProtonUp, Flatseal and system setup in one window\n\n  steamdeck [storage|steam|apps|health|settings|log]   open the window (on that page)\n  steamdeck protonup ...     the ProtonUp command line (try: steamdeck protonup --help)\n  steamdeck flatseal ...     the Flatseal command line\n\nLog: {}", steamdeck::log::path().display());
+                println!("steamdecklauncher: ProtonUp, Flatseal and system setup in one window\n\n  steamdecklauncher [storage|steam|apps|health|settings|log]   open the window (on that page)\n  steamdecklauncher protonup ...     the ProtonUp command line (try: steamdecklauncher protonup --help)\n  steamdecklauncher flatseal ...     the Flatseal command line\n\nLog: {}", steamdecklauncher::log::path().display());
                 return ExitCode::SUCCESS;
             }
             Some("--version") | Some("-V") => {
-                println!("steamdeck {}", env!("CARGO_PKG_VERSION"));
+                println!("steamdecklauncher {}", env!("CARGO_PKG_VERSION"));
                 return ExitCode::SUCCESS;
             }
             other => {
@@ -28,37 +28,37 @@ fn main() -> ExitCode {
                 ];
                 if let Some(o) = other {
                     if o != "settings" && !PAGES.contains(&o) {
-                        eprintln!("steamdeck: unknown command '{o}' (try --help)");
+                        eprintln!("steamdecklauncher: unknown command '{o}' (try --help)");
                         return ExitCode::from(2);
                     }
                 }
                 let section = match other {
-                    Some("steam") => steamdeck::launcher::Section::Steam,
-                    Some("apps") => steamdeck::launcher::Section::Apps,
-                    Some("scripts") => steamdeck::launcher::Section::Scripts,
-                    Some("storage") => steamdeck::launcher::Section::Storage,
-                    Some("health") => steamdeck::launcher::Section::Health,
-                    Some("system") | Some("settings") => steamdeck::launcher::Section::System,
-                    Some("log") => steamdeck::launcher::Section::Log,
-                    _ => steamdeck::launcher::Section::Home,
+                    Some("steam") => steamdecklauncher::launcher::Section::Steam,
+                    Some("apps") => steamdecklauncher::launcher::Section::Apps,
+                    Some("scripts") => steamdecklauncher::launcher::Section::Scripts,
+                    Some("storage") => steamdecklauncher::launcher::Section::Storage,
+                    Some("health") => steamdecklauncher::launcher::Section::Health,
+                    Some("system") | Some("settings") => steamdecklauncher::launcher::Section::System,
+                    Some("log") => steamdecklauncher::launcher::Section::Log,
+                    _ => steamdecklauncher::launcher::Section::Home,
                 };
-                return match steamdeck::launcher::run(steamdeck::launcher::Start {
+                return match steamdecklauncher::launcher::run(steamdecklauncher::launcher::Start {
                     section,
                     ..Default::default()
                 }) {
                     Ok(()) => ExitCode::SUCCESS,
                     Err(e) => {
-                        steamdeck::log::write("launcher", &format!("window failed: {e}"));
-                        eprintln!("steamdeck: {e}");
+                        steamdecklauncher::log::write("launcher", &format!("window failed: {e}"));
+                        eprintln!("steamdecklauncher: {e}");
                         ExitCode::FAILURE
                     }
                 };
             }
         },
     };
-    steamdeck::log::install_panic_hook();
+    steamdecklauncher::log::install_panic_hook();
     match tool.as_str() {
-        "protonup" => steamdeck::cli_protonup::run(rest),
-        _ => steamdeck::cli_flatseal::run(rest),
+        "protonup" => steamdecklauncher::cli_protonup::run(rest),
+        _ => steamdecklauncher::cli_flatseal::run(rest),
     }
 }

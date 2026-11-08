@@ -1,5 +1,5 @@
 //! A plain log file, so that when something breaks on the Deck the text can be fetched afterwards:
-//! `~/.local/state/steamdeck/steamdeck.log` (also written by `setup`). Panics end up there too.
+//! `~/.local/state/steamdecklauncher/steamdecklauncher.log` (also written by `setup`). Panics end up there too.
 use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::path::PathBuf;
@@ -10,7 +10,7 @@ pub fn path() -> PathBuf {
         .filter(|p| p.is_absolute())
         .or_else(|| dirs::home_dir().map(|h| h.join(".local/state")))
         .unwrap_or_else(|| PathBuf::from("."));
-    base.join("steamdeck/steamdeck.log")
+    base.join("steamdecklauncher/steamdecklauncher.log")
 }
 
 fn stamp() -> String {

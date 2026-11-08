@@ -10,8 +10,8 @@ teardown() { rm -rf "$T"; }
 
 @test "the defaults install the programs and set the OOM guard and sysctl, but not ssh" {
 	mkdir -p "$T/dist"
-	printf '#!/bin/sh\n' > "$T/dist/steamdeck-x86_64-linux"
-	(cd "$T/dist" && sha256sum steamdeck-x86_64-linux > SHA256SUMS)
+	printf '#!/bin/sh\n' > "$T/dist/steamdecklauncher-x86_64-linux"
+	(cd "$T/dist" && sha256sum steamdecklauncher-x86_64-linux > SHA256SUMS)
 	run bash -c "printf '\n\n\n\n\n\n\n\n\n\n' | '$ROOT/setup' --dry-run --root '$T' --from '$T/dist'"
 	[ "$status" -eq 0 ]
 	[[ "$output" == *"install the Steam Deck program"* ]]
@@ -46,15 +46,15 @@ teardown() { rm -rf "$T"; }
 @test "option 2 shows the state and option 3 removes what was installed" {
 	export HOME=$T/home XDG_CONFIG_HOME=$T/home/.config STEAMDECK_NO_SYSTEMD=1
 	mkdir -p "$HOME/.local/bin"
-	: > "$HOME/.local/bin/steamdeck"; chmod +x "$HOME/.local/bin/steamdeck"
-	ln -s steamdeck "$HOME/.local/bin/protonup"
+	: > "$HOME/.local/bin/steamdecklauncher"; chmod +x "$HOME/.local/bin/steamdecklauncher"
+	ln -s steamdecklauncher "$HOME/.local/bin/protonup"
 	run bash -c "printf '2\n' | '$ROOT/setup' --dry-run --root '$T/r'"
 	[ "$status" -eq 0 ]
 	[[ "$output" == *"installed  $HOME/.local/bin/protonup"* ]]
-	[[ "$output" == *"installed  $HOME/.local/bin/steamdeck"* ]]
+	[[ "$output" == *"installed  $HOME/.local/bin/steamdecklauncher"* ]]
 	[[ "$output" == *"missing    $HOME/.local/bin/flatseal"* ]]
 	run bash -c "printf '3\ny\nn\n' | '$ROOT/setup' --root '$T/r'"
 	[ "$status" -eq 0 ]
 	[ ! -e "$HOME/.local/bin/protonup" ]
-	[ ! -e "$HOME/.local/bin/steamdeck" ]
+	[ ! -e "$HOME/.local/bin/steamdecklauncher" ]
 }

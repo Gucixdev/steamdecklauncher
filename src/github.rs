@@ -92,7 +92,7 @@ pub fn agent() -> ureq::Agent {
     ureq::Agent::config_builder()
         .timeout_global(Some(Duration::from_secs(60 * 60)))
         .timeout_connect(Some(Duration::from_secs(15)))
-        .user_agent("protonup (github.com/Gucixdev/steamdeck)")
+        .user_agent("protonup (github.com/Gucixdev/steamdecklauncher)")
         .build()
         .into()
 }

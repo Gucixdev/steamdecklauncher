@@ -12,7 +12,7 @@ use std::io::{BufRead, BufReader, Write};
 use std::net::TcpListener;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
-use steamdeck::launcher::{App, Msg, Section, Start};
+use steamdecklauncher::launcher::{App, Msg, Section, Start};
 
 // ---- the fake world ------------------------------------------------------------------------------
 
@@ -448,7 +448,7 @@ fn the_game_list_shows_the_game_and_its_proton_and_a_change_is_saved() {
     assert!(win.has("Dota 2"));
     // the dropdown itself is a pick_list; the message it sends is what is checked here
     let root = w.home.join(".local/share/Steam");
-    win.feed(vec![Msg::Proton(steamdeck::proton_gui::Msg::SetTool(
+    win.feed(vec![Msg::Proton(steamdecklauncher::proton_gui::Msg::SetTool(
         root.clone(),
         570,
         "GE-Proton10-19".into(),
@@ -459,7 +459,7 @@ fn the_game_list_shows_the_game_and_its_proton_and_a_change_is_saved() {
         "{cfg}"
     );
     assert!(
-        root.join("config/config.vdf.steamdeck-bak").is_file(),
+        root.join("config/config.vdf.steamdecklauncher-bak").is_file(),
         "a backup of the previous file"
     );
 }
@@ -486,9 +486,9 @@ fn the_data_of_a_removed_app_can_be_cleared_and_nothing_else_goes() {
     });
     assert!(win.has("data of a removed app"));
     // the leftover is the third row (two installed apps come first); asking for it is what its button does
-    win.feed(vec![Msg::Apps(steamdeck::flatapps::Msg::Ask(
+    win.feed(vec![Msg::Apps(steamdecklauncher::flatapps::Msg::Ask(
         2,
-        steamdeck::flatapps::Action::DeleteData,
+        steamdecklauncher::flatapps::Action::DeleteData,
     ))]);
     win.click("Yes");
     assert!(!w.home.join(".var/app/org.gone.Gone").exists());
@@ -571,9 +571,9 @@ fn the_flatpak_installation_folders_are_not_listed_and_survive_everything() {
     }
     // clear all data of every row that offers it, then check the installation is whole
     for i in 0..3 {
-        win.feed(vec![Msg::Apps(steamdeck::flatapps::Msg::Ask(
+        win.feed(vec![Msg::Apps(steamdecklauncher::flatapps::Msg::Ask(
             i,
-            steamdeck::flatapps::Action::DeleteData,
+            steamdecklauncher::flatapps::Action::DeleteData,
         ))]);
         win.click("Yes");
     }

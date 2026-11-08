@@ -25,7 +25,7 @@ while [ $# -gt 0 ]; do
 	esac
 done
 
-PROGS=(steamdeck)
+PROGS=(steamdecklauncher)
 
 if [ -n "$PUBLISH" ]; then
 	GLIBC=2.36 # SteamOS 3.5 ships 2.37; the binary then runs on every SteamOS, not just this machine
@@ -42,7 +42,7 @@ if [ -n "$PUBLISH" ]; then
 		printf '%-10s needs glibc %s\n' "$p" "${v:-?}"
 	done
 	gh release create "$PUBLISH" dist/*-x86_64-linux dist/SHA256SUMS --title "$PUBLISH" \
-		--notes "steamdeck $PUBLISH: one binary for x86_64 Linux (ProtonUp, Flatseal and system setup in one window). Install with ./setup."
+		--notes "steamdecklauncher $PUBLISH: one binary for x86_64 Linux (ProtonUp, Flatseal and system setup in one window). Install with ./setup."
 	exit 0
 fi
 
@@ -66,8 +66,8 @@ fi
 
 # the section to open; no arguments are passed on to the program
 case "${1:-}" in
-	"") exec "$TARGET/steamdeck" ;;
-	protonup|flatseal) exec "$TARGET/steamdeck" "$1" gui ;;
-	system|log) exec "$TARGET/steamdeck" ;;
+	"") exec "$TARGET/steamdecklauncher" ;;
+	protonup|flatseal) exec "$TARGET/steamdecklauncher" "$1" gui ;;
+	system|log) exec "$TARGET/steamdecklauncher" ;;
 	*) die "unknown section '$1' (protonup, flatseal, system, log)" ;;
 esac

@@ -2,11 +2,11 @@
 # setup - a wizard for a Steam Deck: asks what you want, shows the list, then does it.
 #
 #   ./setup                  the wizard (set up, show what is set up, remove it again)
-#   curl -fsSL https://raw.githubusercontent.com/Gucixdev/steamdeck/main/setup | bash
+#   curl -fsSL https://raw.githubusercontent.com/Gucixdev/steamdecklauncher/main/setup | bash
 #                            the same from GitHub: installs ProtonUp and Flatseal from the latest release
 #
 # Nothing changes until you confirm the summary. Files written under /etc start with a
-# "managed by steamdeck/setup" line, so undo removes exactly those and nothing else.
+# "managed by steamdecklauncher/setup" line, so undo removes exactly those and nothing else.
 # `./setup --help` lists every option.
 set -euo pipefail
 
@@ -17,7 +17,7 @@ SELF=
 HERE=
 [ -z "$SELF" ] || HERE=$(dirname "$SELF")
 
-REPO=${STEAMDECK_REPO:-Gucixdev/steamdeck}
+REPO=${STEAMDECK_REPO:-Gucixdev/steamdecklauncher}
 PREFIX=${HOME}/.local
 VERSION=latest
 FROM=
@@ -31,10 +31,10 @@ ROOT=/
 SWAPPINESS=100
 ACTIONS=()
 SUFFIX=x86_64-linux
-MARK="# managed by steamdeck/setup"
+MARK="# managed by steamdecklauncher/setup"
 
 # everything said also goes to the log file, so a failure on the Deck can be read afterwards
-LOGFILE=${XDG_STATE_HOME:-$HOME/.local/state}/steamdeck/steamdeck.log
+LOGFILE=${XDG_STATE_HOME:-$HOME/.local/state}/steamdecklauncher/steamdecklauncher.log
 log() { mkdir -p "$(dirname "$LOGFILE")" 2>/dev/null && printf '%s setup: %s\n' "$(date +%s)" "$*" >>"$LOGFILE" 2>/dev/null || true; }
 say() { printf '%s\n' "$*"; log "$*"; }
 die() { printf 'setup: %s\n' "$*" >&2; log "ERROR $*"; exit 1; }
@@ -43,17 +43,17 @@ usage() { # a heredoc, so it also works when the script is piped into bash (no f
 setup - a wizard for a Steam Deck: asks what you want, shows the list, then does it.
 
   ./setup                  the wizard (set up, show what is set up, remove it again)
-  curl -fsSL https://raw.githubusercontent.com/Gucixdev/steamdeck/main/setup | bash
+  curl -fsSL https://raw.githubusercontent.com/Gucixdev/steamdecklauncher/main/setup | bash
                            the same from GitHub: installs the program from the latest release
 
 What it can do:
-  programs   the steamdeck program (ProtonUp and Flatseal windows) into ~/.local/bin, with
+  programs   the steamdecklauncher program (ProtonUp and Flatseal windows) into ~/.local/bin, with
              the protonup and flatseal command names, a menu entry, optional weekly Proton-GE update
   system     OOM guard (systemd-oomd), memory sysctl for zram, swap file size, ssh (asks sudo, /etc only)
   firefox    telemetry and sponsored content off, WebRTC leak guard, uBlock Origin in the default profile
 
 Nothing changes until you confirm the summary. Files written under /etc start with a
-"managed by steamdeck/setup" line, so undo removes exactly those and nothing else.
+"managed by steamdecklauncher/setup" line, so undo removes exactly those and nothing else.
 
 Options for scripts and tests (the wizard needs none of them):
   --programs             only the programs step, no questions
@@ -100,7 +100,7 @@ fi
 
 # ============================== programs ================================================
 
-ALL=(steamdeck)
+ALL=(steamdecklauncher)
 APPS=("${ALL[@]}")
 CMDS=(protonup flatseal) # names the one program also answers to (symlinks)
 
@@ -154,11 +154,11 @@ programs_uninstall() {
 	done
 	# the entries (and the single "Steam Deck" entry older versions wrote)
 	for n in "${ENTRIES[@]}"; do
-		prun rm -f "$APPDIR/steamdeck-$n.desktop" "$ICONDIR/steamdeck-$n.svg"
+		prun rm -f "$APPDIR/steamdecklauncher-$n.desktop" "$ICONDIR/steamdecklauncher-$n.svg"
 	done
 	for n in "${CMDS[@]}"; do
 		# only our own link; a real protonup/flatseal of the user's is not ours to remove
-		if [ -L "$BIN/$n" ] && [ "$(readlink "$BIN/$n")" = steamdeck ]; then prun rm -f "$BIN/$n"; fi
+		if [ -L "$BIN/$n" ] && [ "$(readlink "$BIN/$n")" = steamdecklauncher ]; then prun rm -f "$BIN/$n"; fi
 	done
 	if [ -f "$UNITDIR/protonup-update.timer" ]; then
 		nosystemd || prun systemctl --user disable --now protonup-update.timer 2>/dev/null || true
@@ -248,27 +248,27 @@ programs_install() {
 	for n in "${CMDS[@]}"; do
 		# never replace a protonup/flatseal that is not our link (the user's own tool, or another package's)
 		if [ -e "$BIN/$n" ] || [ -L "$BIN/$n" ]; then
-			if [ -L "$BIN/$n" ] && [ "$(readlink "$BIN/$n")" = steamdeck ]; then continue; fi
+			if [ -L "$BIN/$n" ] && [ "$(readlink "$BIN/$n")" = steamdecklauncher ]; then continue; fi
 			say "skip $BIN/$n: it exists and is not ours"
 			continue
 		fi
-		if [ "$DRY" = 1 ]; then printf '+ link %s/%s -> steamdeck\n' "$BIN" "$n"; else ln -s steamdeck "$BIN/$n"; fi
+		if [ "$DRY" = 1 ]; then printf '+ link %s/%s -> steamdecklauncher\n' "$BIN" "$n"; else ln -s steamdecklauncher "$BIN/$n"; fi
 	done
 
 	if [ "$DESKTOP" = 1 ]; then
 		# an entry written by an older version that opened one window with every page
-		prun rm -f "$APPDIR/steamdeck.desktop" "$ICONDIR/steamdeck.svg"
+		prun rm -f "$APPDIR/steamdecklauncher.desktop" "$ICONDIR/steamdecklauncher.svg"
 		for n in "${ENTRIES[@]}"; do
-			write_file "$ICONDIR/steamdeck-$n.svg" <<SVG
+			write_file "$ICONDIR/steamdecklauncher-$n.svg" <<SVG
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><rect width="128" height="128" rx="24" fill="#0b0b10"/><circle cx="64" cy="64" r="48" fill="none" stroke="$(icon_color "$n")" stroke-width="10"/><text x="64" y="86" text-anchor="middle" font-family="monospace" font-weight="bold" font-size="64" fill="#00ff41">$(icon_glyph "$n")</text></svg>
 SVG
-			write_file "$APPDIR/steamdeck-$n.desktop" <<DESK
+			write_file "$APPDIR/steamdecklauncher-$n.desktop" <<DESK
 [Desktop Entry]
 Type=Application
 Name=$(title "$n")
 Comment=$(comment "$n")
-Exec=$(desktop_exec "$BIN/steamdeck") $n gui
-Icon=steamdeck-$n
+Exec=$(desktop_exec "$BIN/steamdecklauncher") $n gui
+Icon=steamdecklauncher-$n
 Terminal=false
 Categories=Utility;Game;
 DESK
@@ -283,7 +283,7 @@ Description=Install the newest Protons you use
 
 [Service]
 Type=oneshot
-ExecStart=$BIN/steamdeck protonup update
+ExecStart=$BIN/steamdecklauncher protonup update
 UNIT
 		write_file "$UNITDIR/protonup-update.timer" <<UNIT
 [Unit]
@@ -349,7 +349,7 @@ have_systemd() { [ "$LIVE" = 0 ] || command -v systemctl >/dev/null; }
 
 action_oom() {
 	say "== oom: systemd-oomd"
-	write_conf /etc/systemd/oomd.conf.d/10-steamdeck.conf <<'CONF'
+	write_conf /etc/systemd/oomd.conf.d/10-steamdecklauncher.conf <<'CONF'
 # When swap is 90% full, or a cgroup stalls on memory for 20 s at 60% pressure, systemd-oomd kills the
 # worst offender in the user's slice (the game) instead of letting the whole machine thrash.
 [OOM]
@@ -357,16 +357,16 @@ SwapUsedLimit=90%
 DefaultMemoryPressureLimit=60%
 DefaultMemoryPressureDurationSec=20s
 CONF
-	write_conf /etc/systemd/system/-.slice.d/10-steamdeck-oomd.conf <<'CONF'
+	write_conf /etc/systemd/system/-.slice.d/10-steamdecklauncher-oomd.conf <<'CONF'
 [Slice]
 ManagedOOMSwap=kill
 CONF
-	write_conf /etc/systemd/system/user@.service.d/10-steamdeck-oomd.conf <<'CONF'
+	write_conf /etc/systemd/system/user@.service.d/10-steamdecklauncher-oomd.conf <<'CONF'
 [Service]
 ManagedOOMMemoryPressure=kill
 ManagedOOMMemoryPressureLimit=60%
 CONF
-	write_conf /etc/systemd/user/gamescope-session-plus@.service.d/10-steamdeck-oomd.conf <<'CONF'
+	write_conf /etc/systemd/user/gamescope-session-plus@.service.d/10-steamdecklauncher-oomd.conf <<'CONF'
 # keep the Gaming Mode compositor out of oomd's reach: the game goes first
 [Service]
 ManagedOOMPreference=avoid
@@ -383,7 +383,7 @@ CONF
 
 action_sysctl() {
 	say "== sysctl"
-	write_conf /etc/sysctl.d/99-steamdeck-setup.conf <<CONF
+	write_conf /etc/sysctl.d/99-steamdecklauncher-setup.conf <<CONF
 # zram is the first swap and it is fast: swap early, keep the file cache a bit longer, read one page at a time
 vm.swappiness = $SWAPPINESS
 vm.vfs_cache_pressure = 50
@@ -391,7 +391,7 @@ vm.page-cluster = 0
 # games and Proton map many memory areas; the old default of 65530 makes some of them crash
 vm.max_map_count = 2147483642
 CONF
-	srun sysctl -q -p "$(P /etc/sysctl.d/99-steamdeck-setup.conf)"
+	srun sysctl -q -p "$(P /etc/sysctl.d/99-steamdecklauncher-setup.conf)"
 }
 
 action_trim() {
@@ -406,7 +406,7 @@ action_trim() {
 
 action_coredump() {
 	say "== coredump"
-	write_conf /etc/systemd/coredump.conf.d/10-steamdeck.conf <<'CONF'
+	write_conf /etc/systemd/coredump.conf.d/10-steamdecklauncher.conf <<'CONF'
 # A crashing game can leave a core dump of several gigabytes; keep only the journal entry.
 [Coredump]
 Storage=none
@@ -450,7 +450,7 @@ action_swapfile() {
 action_status() {
 	say "== status"
 	local f
-	for f in /etc/systemd/oomd.conf.d/10-steamdeck.conf /etc/sysctl.d/99-steamdeck-setup.conf; do
+	for f in /etc/systemd/oomd.conf.d/10-steamdecklauncher.conf /etc/sysctl.d/99-steamdecklauncher-setup.conf; do
 		if managed "$(P "$f")"; then say "present  $f"; else say "absent   $f"; fi
 	done
 	if [ "$LIVE" = 1 ]; then
@@ -467,12 +467,12 @@ action_undo() {
 	say "== undo"
 	local f
 	for f in \
-		/etc/systemd/oomd.conf.d/10-steamdeck.conf \
-		/etc/systemd/system/-.slice.d/10-steamdeck-oomd.conf \
-		/etc/systemd/system/user@.service.d/10-steamdeck-oomd.conf \
-		/etc/systemd/user/gamescope-session-plus@.service.d/10-steamdeck-oomd.conf \
-		/etc/systemd/coredump.conf.d/10-steamdeck.conf \
-		/etc/sysctl.d/99-steamdeck-setup.conf; do
+		/etc/systemd/oomd.conf.d/10-steamdecklauncher.conf \
+		/etc/systemd/system/-.slice.d/10-steamdecklauncher-oomd.conf \
+		/etc/systemd/system/user@.service.d/10-steamdecklauncher-oomd.conf \
+		/etc/systemd/user/gamescope-session-plus@.service.d/10-steamdecklauncher-oomd.conf \
+		/etc/systemd/coredump.conf.d/10-steamdecklauncher.conf \
+		/etc/sysctl.d/99-steamdecklauncher-setup.conf; do
 		if managed "$(P "$f")"; then
 			if [ "$DRY" = 1 ]; then
 				say "would remove $f"
@@ -552,14 +552,14 @@ firefox_prepare() {
 	local prof js start end tmp xpi
 	prof=$(firefox_profile) || { say "firefox: no profile found (start Firefox once, then run this again)"; return 0; }
 	js=$prof/user.js
-	start="// >>> steamdeck setup"
-	end="// <<< steamdeck setup"
+	start="// >>> steamdecklauncher setup"
+	end="// <<< steamdecklauncher setup"
 	say "== firefox: $prof"
 	if [ "$DRY" = 1 ]; then say "would write the prefs to $js and install uBlock Origin"; return 0; fi
 	tmp=$(mktemp)
 	[ -f "$js" ] && awk -v s="$start" -v e="$end" '$0==s{skip=1} !skip{print} $0==e{skip=0}' "$js" >"$tmp"
 	cat >>"$tmp" <<'PREFS'
-// >>> steamdeck setup
+// >>> steamdecklauncher setup
 user_pref("datareporting.healthreport.uploadEnabled", false);
 user_pref("datareporting.policy.dataSubmissionEnabled", false);
 user_pref("toolkit.telemetry.enabled", false);
@@ -593,10 +593,10 @@ user_pref("dom.security.https_only_mode", true);
 user_pref("privacy.trackingprotection.enabled", true);
 user_pref("media.peerconnection.ice.default_address_only", true);
 user_pref("extensions.autoDisableScopes", 0);
-// <<< steamdeck setup
+// <<< steamdecklauncher setup
 PREFS
 	# the first time, keep what was there; the file is replaced in one step either way
-	if [ -f "$js" ] && [ ! -e "$js.steamdeck-bak" ]; then cp -p "$js" "$js.steamdeck-bak"; fi
+	if [ -f "$js" ] && [ ! -e "$js.steamdecklauncher-bak" ]; then cp -p "$js" "$js.steamdecklauncher-bak"; fi
 	mv -f "$tmp" "$js"
 	say "wrote the privacy prefs to $js"
 	# uBlock Origin from addons.mozilla.org, dropped into the profile (Firefox picks it up at the next start)
@@ -646,7 +646,7 @@ ask_val() {
 wizard() {
 	# the questions are read from the terminal even when the script itself comes through a pipe (curl | bash)
 	if [ -n "$SELF" ]; then exec 3<&0; else exec 3</dev/tty || die "no terminal to ask on"; fi
-	echo "steamdeck setup: answer a few questions; nothing changes until you confirm at the end."
+	echo "steamdecklauncher setup: answer a few questions; nothing changes until you confirm at the end."
 	echo
 	ask_val "1) set up   2) show what is set up   3) remove what setup did" 1 '^[123]$'
 	local mode=$VAL
@@ -696,7 +696,7 @@ wizard() {
 		ask_yn "Enable ssh so you can log in from another computer?" n; do_ssh=$YES
 	else
 		echo
-		echo "(the system tuning needs the script as a file: git clone https://github.com/$REPO && cd steamdeck && ./setup)"
+		echo "(the system tuning needs the script as a file: git clone https://github.com/$REPO && cd steamdecklauncher && ./setup)"
 	fi
 
 	echo

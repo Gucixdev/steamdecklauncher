@@ -1,4 +1,4 @@
-# steamdeck
+# steamdecklauncher
 
 One small program for the Steam Deck that does not drag Qt, Python or GTK along: **ProtonUp** and **Flatseal**
 in a single window, in Steam's colours, plus a `setup` wizard for the system tweaks. Rust and iced, one binary (about 15 MB), plus
@@ -9,7 +9,7 @@ two bash files: `setup` (a wizard) and `run` (build, install, start).
 | Home | action tiles: Update Protons, Update Flatpak apps, and a warning when two Steam installs are found |
 | ProtonUp | **Proton for my games** (a Proton and launch options per game, every Steam install on one list) and **Download Proton** (Proton-GE, Proton-CachyOS, Proton-EM, Luxtorpeda and more) |
 | Flatseal | **Permissions** (default / on / off, portals, PipeWire, filesystems, buses, environment) and **Uninstall / clear data** (Flatpak apps, leftovers of removed ones) |
-| Log | `~/.local/state/steamdeck/steamdeck.log`: what the window and `setup` did, every error and panic |
+| Log | `~/.local/state/steamdecklauncher/steamdecklauncher.log`: what the window and `setup` did, every error and panic |
 
 System tweaks (OOM guard, memory settings for zram, swap file size, ssh) live in `setup`, see below.
 
@@ -21,13 +21,13 @@ for HTTPS, pure-Rust gzip and xz.
 On the Deck, in Desktop Mode, in a terminal:
 
 ```sh
-git clone https://github.com/Gucixdev/steamdeck && cd steamdeck && ./setup
+git clone https://github.com/Gucixdev/steamdecklauncher && cd steamdecklauncher && ./setup
 ```
 
 or only the program, straight from the latest release (SHA-256 verified against `SHA256SUMS`):
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Gucixdev/steamdeck/main/setup | bash
+curl -fsSL https://raw.githubusercontent.com/Gucixdev/steamdecklauncher/main/setup | bash
 ```
 
 `setup` asks what you want and shows the list before it changes anything: the program (the ProtonUp and Flatseal menu entries and the
@@ -45,7 +45,7 @@ For Gaming Mode: Desktop Mode, Steam, Games, **Add a Non-Steam Game**, pick Prot
 ```
 setup                     the wizard: programs, system, Firefox (asks, confirms, applies)
 run                       build when src changed, install, start; --publish TAG makes the release
-src/main.rs               steamdeck [protonup|flatseal ...] command lines, no arguments = the window
+src/main.rs               steamdecklauncher [protonup|flatseal ...] command lines, no arguments = the window
 src/launcher.rs           the window: Home, ProtonUp, Flatseal, Log
 src/ui.rs                 theme (Steam colours) and the layout every section uses: sidebar + main area
 src/proton_gui.rs  cli_protonup.rs  github.rs install.rs sources.rs steam.rs games.rs
@@ -85,7 +85,7 @@ releases with Install, and remove for the installed ones; **Update Protons** on 
 of every kind you have) and **Proton for my games** (a table with a dropdown per game, like
 ProtonUp-Qt, across every Steam install, or one choice for all games; Valve's own Protons are in the list, launch options per game: GameMode, MangoHud, FSR; ProtonDB ratings on request). `protonup update` (what the weekly timer runs) installs the newest of every kind you have and sends a desktop notification. Alt+1..4 switch the tabs. The per-game choice is written to Steam's `config/config.vdf` (`CompatToolMapping`); Steam
 rewrites that file when it exits, so protonup refuses to change it while Steam is running and keeps a
-`config.vdf.steamdeck-bak` of the previous file.
+`config.vdf.steamdecklauncher-bak` of the previous file.
 
 Releases come from GitHub's API. Downloads are checked against the SHA-512 the project publishes; a
 project that publishes none (Sarek, Northstar) is installed on HTTPS alone and the window and the
@@ -136,7 +136,7 @@ and applies it only after you confirm. The actions below are what `setup --syste
 | `ssh` | enable `sshd` |
 | `status`, `undo` | what is set; remove exactly the files this script wrote |
 
-Every file starts with a `managed by steamdeck/setup` line; a file without it is never overwritten or
+Every file starts with a `managed by steamdecklauncher/setup` line; a file without it is never overwritten or
 removed. `--root DIR` writes into a test tree and only prints the commands, `--dry-run` changes nothing.
 
 ## Scope
@@ -166,7 +166,7 @@ cargo test              # unit and end-to-end tests (a local HTTP server stands 
 bats tests/             # setup: programs, system actions, firefox, the wizard
 ```
 
-`run` passes no arguments on; for those use `steamdeck protonup ...` / `steamdeck flatseal ...`.
+`run` passes no arguments on; for those use `steamdecklauncher protonup ...` / `steamdecklauncher flatseal ...`.
 
 ## Status
 

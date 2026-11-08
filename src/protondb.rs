@@ -1,7 +1,7 @@
 //! ProtonDB ratings (platinum, gold, ...) and Steam's own "has a Linux build" flag for the games in the
 //! table. Nothing is sent unless you press
 //! the button; the request is the public summary endpoint with only the app id in it, and the answers
-//! are cached in `~/.cache/steamdeck/protondb.json` so each game is asked once.
+//! are cached in `~/.cache/steamdecklauncher/protondb.json` so each game is asked once.
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -11,7 +11,7 @@ fn cache_path() -> PathBuf {
         .filter(|p| p.is_absolute())
         .or_else(|| dirs::home_dir().map(|h| h.join(".cache")))
         .unwrap_or_else(|| PathBuf::from("."));
-    base.join("steamdeck/protondb.json")
+    base.join("steamdecklauncher/protondb.json")
 }
 
 pub fn cached() -> HashMap<u64, String> {
