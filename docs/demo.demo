@@ -1,0 +1,30 @@
+# steamdecklauncher: ProtonUp + Flatseal in one iced window (software renderer, private HOME, nothing is clicked that changes a system)
+Window gui
+Size 1100x700
+Title "steamdecklauncher"
+Env ICED_BACKEND=tiny-skia
+Run ${STEAMDECKLAUNCHER:-steamdecklauncher}
+WaitFor settle 800ms 40s
+Caption "steamdecklauncher - ProtonUp and Flatseal in one small window" bottom
+Sleep 2s
+MouseMove 822 71 700ms
+MouseClick
+WaitFor settle 800ms 20s
+Caption "ProtonUp: a Proton and launch options per game" bottom
+Sleep 1500ms
+MouseMove 89 188 600ms
+MouseClick
+WaitFor settle 1500ms 30s
+Caption "Download Proton: Proton-GE and friends, one click" bottom
+Sleep 2500ms
+MouseMove 951 71 700ms
+MouseClick
+WaitFor settle 800ms 20s
+Caption "Flatseal: permissions per Flatpak app" bottom
+Sleep 2500ms
+MouseMove 1051 71 700ms
+MouseClick
+WaitFor settle 800ms 20s
+Caption "Log: what the window did" bottom
+Sleep 2s
+Loop

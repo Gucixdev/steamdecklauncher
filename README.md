@@ -4,6 +4,10 @@ One small program for the Steam Deck that does not drag Qt, Python or GTK along:
 in a single window, in Steam's colours, plus a `setup` wizard for the system tweaks. Rust and iced, one binary (about 15 MB), plus
 two bash files: `setup` (a wizard) and `run` (build, install, start).
 
+![steamdecklauncher: ProtonUp, Flatseal, log](docs/demo.webp)
+
+The clip is recorded by autodemo driving the real window with the software renderer (`docs/demo.demo`).
+
 | | what |
 |---|---|
 | Home | action tiles: Update Protons, Update Flatpak apps, and a warning when two Steam installs are found |
