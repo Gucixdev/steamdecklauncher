@@ -96,11 +96,13 @@ pub fn run(start: Start) -> iced::Result {
                 }
                 _ => None,
             });
+            // Firefox settings are saved as versions when they change, whoever changed them
+            let watch = iced::time::every(std::time::Duration::from_secs(5)).map(|_| Msg::Fixes(fixes::Msg::Watch));
             // the spinner and the clocks only tick while something runs
             if app.proton.is_busy() || app.apps.is_updating() || app.scripts.is_running() {
-                iced::Subscription::batch([keys, iced::window::frames().map(|_| Msg::Tick)])
+                iced::Subscription::batch([keys, watch, iced::window::frames().map(|_| Msg::Tick)])
             } else {
-                keys
+                iced::Subscription::batch([keys, watch])
             }
         })
         .theme(|_: &App| theme())

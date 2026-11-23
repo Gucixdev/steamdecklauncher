@@ -3,6 +3,7 @@
 //! ones run the same `setup --system` actions the bash wizard has (OOM guard, memory settings, swap file, ssh),
 //! output shown and logged. The script is embedded in the program, so one binary is enough on the Deck; root
 //! comes from pkexec (or sudo in a terminal) and only for the system actions.
+use crate::ffsync;
 use crate::firefox;
 use crate::log;
 use crate::ui::{heading, segment, ACCENT, DIM, SMALL_SIZE, SPACING, TEXT_SIZE};
@@ -25,6 +26,16 @@ pub enum Msg {
     Fullscreen(bool),
     PrivacyOff,
     Refresh,
+    /// every few seconds: did a Firefox setting file change?
+    Watch,
+    /// a version was (or was not) saved: why, and what came of it
+    Saved(String, Result<Option<String>, String>),
+    Remote(String),
+    SaveRemote,
+    Push,
+    Restore,
+    /// the answer of a push / restore / address change
+    Synced(String),
 }
 
 pub struct State {
@@ -35,6 +46,11 @@ pub struct State {
     ff: Option<PathBuf>,
     fullscreen: bool,
     privacy: bool,
+    /// ffsync::fingerprint of the profile at the last look
+    print: String,
+    versions: Vec<String>,
+    remote: String,
+    git_note: Option<String>,
 }
 
 impl State {
@@ -47,14 +63,23 @@ impl State {
             ff: None,
             fullscreen: false,
             privacy: false,
+            print: String::new(),
+            versions: ffsync::history(5),
+            remote: ffsync::remote().unwrap_or_default(),
+            git_note: None,
         };
         s.look();
+        // plug and play: what the profile already has is saved as the first version, nothing to switch on
+        let first = s.save("first save");
         (
             s,
-            Task::perform(
-                crate::ui::blocking(move || run_setup(vec!["--system".into(), "status".into()], false)),
-                |(a, o)| Msg::Done(a, o),
-            ),
+            Task::batch([
+                first,
+                Task::perform(
+                    crate::ui::blocking(move || run_setup(vec!["--system".into(), "status".into()], false)),
+                    |(a, o)| Msg::Done(a, o),
+                ),
+            ]),
         )
     }
 
@@ -69,13 +94,35 @@ impl State {
         self.privacy = self.ff.as_deref().is_some_and(|p| firefox::has_block(p, firefox::PRIVACY));
     }
 
-    fn firefox_change(&mut self, what: &str, r: std::io::Result<String>) {
+    fn firefox_change(&mut self, what: &str, r: std::io::Result<String>) -> Task<Msg> {
+        let ok = r.is_ok();
         self.output = match r {
             Ok(m) => format!("{what}: {m}\nRestart Firefox for it to apply."),
             Err(e) => format!("{what}: could not write the Firefox profile: {e}"),
         };
         log::write("fixes", &self.output);
         self.look();
+        if ok {
+            self.save(what)
+        } else {
+            Task::none()
+        }
+    }
+
+    /// Save the profile's settings as a new version, off the window thread (git takes a moment).
+    fn save(&mut self, why: &str) -> Task<Msg> {
+        let Some(p) = self.ff.clone() else {
+            return Task::none();
+        };
+        self.print = ffsync::fingerprint(&p);
+        let why = why.to_string();
+        Task::perform(
+            crate::ui::blocking({
+                let why = why.clone();
+                move || ffsync::snapshot(&p, &why)
+            }),
+            move |r| Msg::Saved(why.clone(), r),
+        )
     }
 
     pub fn update(&mut self, m: Msg) -> Task<Msg> {
@@ -97,6 +144,66 @@ impl State {
                 log::write("fixes", &format!("{a}\n{o}"));
                 self.output = o;
                 self.look();
+                // the privacy step writes user.js itself: the version is saved when it is done
+                return self.save("setup finished");
+            }
+            Msg::Watch => {
+                if let Some(p) = &self.ff {
+                    if ffsync::fingerprint(p) != self.print {
+                        self.look();
+                        return self.save("changed outside the launcher");
+                    }
+                }
+            }
+            Msg::Saved(why, r) => {
+                match r {
+                    Ok(Some(id)) => log::write("fixes", &format!("saved version {id}: {why}")),
+                    Ok(None) => {}
+                    Err(e) => {
+                        log::write("fixes", &format!("saving the Firefox settings failed: {e}"));
+                        self.git_note = Some(e);
+                    }
+                }
+                self.versions = ffsync::history(5);
+                self.remote = ffsync::remote().unwrap_or(std::mem::take(&mut self.remote));
+            }
+            Msg::Remote(s) => self.remote = s,
+            Msg::SaveRemote => {
+                self.output = match ffsync::set_remote(&self.remote) {
+                    Ok(()) => format!("repository address saved: {}", self.remote.trim()),
+                    Err(e) => e,
+                };
+            }
+            Msg::Push => {
+                self.busy = true;
+                self.output = "pushing the saved versions...".into();
+                return Task::perform(crate::ui::blocking(ffsync::push), |r| {
+                    Msg::Synced(match r {
+                        Ok(t) => format!("push: {t}"),
+                        Err(e) => format!("push failed: {e}"),
+                    })
+                });
+            }
+            Msg::Restore => {
+                let Some(p) = self.ff.clone() else {
+                    return Task::none();
+                };
+                self.busy = true;
+                self.output = "restoring the saved settings...".into();
+                return Task::perform(crate::ui::blocking(move || ffsync::restore(&p, None)), |r| {
+                    Msg::Synced(match r {
+                        Ok(t) => format!("restore: {t}. Restart Firefox for it to apply."),
+                        Err(e) => format!("restore failed: {e}"),
+                    })
+                });
+            }
+            Msg::Synced(t) => {
+                self.busy = false;
+                log::write("fixes", &t);
+                self.output = t;
+                self.look();
+                self.print = self.ff.as_deref().map(ffsync::fingerprint).unwrap_or_default();
+                self.versions = ffsync::history(5);
             }
             Msg::Fullscreen(on) => {
                 if let Some(p) = self.ff.clone() {
@@ -107,7 +214,7 @@ impl State {
                         firefox::remove_block(&p, firefox::FULLSCREEN)
                             .map(|_| "the preference block is removed".to_string())
                     };
-                    self.firefox_change("fullscreen fix", r);
+                    return self.firefox_change("fullscreen fix", r);
                 }
             }
             Msg::PrivacyOff => {
@@ -115,7 +222,7 @@ impl State {
                     let r = firefox::remove_block(&p, firefox::PRIVACY).map(|_| {
                         "the privacy preferences are removed (uBlock Origin stays: remove it under Add-ons)".to_string()
                     });
-                    self.firefox_change("privacy", r);
+                    return self.firefox_change("privacy off", r);
                 }
             }
         }
@@ -180,6 +287,35 @@ impl State {
                     segment("Apply privacy prefs", false, false, Msg::Setup(vec!["--firefox".into()])),
                     segment("Undo privacy prefs", false, true, Msg::PrivacyOff),
                 ),
+            ),
+            card(
+                "Versions of these settings",
+                have_ff.then_some(!self.versions.is_empty()),
+                "A new Deck, a reset Firefox or a change you regret loses the set-up you made.",
+                "Every change to user.js, containers.json, userChrome.css and userContent.css is saved as a version within a few seconds (a git repository in ~/.config/steamdecklauncher/firefox-settings), whoever made it. Cookies, logins and history are never saved. Push sends the versions to a repository of yours (make it a private one); Restore puts the newest saved settings back, after saving what is there now.",
+                {
+                    let mut c = column![row![
+                        text_input("git@github.com:you/firefox-settings.git", &self.remote)
+                            .on_input(Msg::Remote)
+                            .on_submit(Msg::SaveRemote)
+                            .width(380)
+                            .padding(8)
+                            .size(SMALL_SIZE),
+                        segment("Save address", false, false, Msg::SaveRemote),
+                        segment("Push versions", false, false, Msg::Push),
+                        segment("Restore saved settings", false, false, Msg::Restore),
+                    ]
+                    .spacing(8)
+                    .align_y(iced::Alignment::Center)]
+                    .spacing(4);
+                    if let Some(n) = &self.git_note {
+                        c = c.push(text(n.clone()).size(SMALL_SIZE).color(DIM));
+                    }
+                    for v in &self.versions {
+                        c = c.push(text(v.clone()).size(SMALL_SIZE).color(DIM));
+                    }
+                    c.into()
+                },
             ),
             heading("System"),
             text("These change files in /etc, which survive SteamOS updates. Each asks for your password.")

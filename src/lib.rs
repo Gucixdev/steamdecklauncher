@@ -5,6 +5,7 @@
 
 pub mod cli_flatseal;
 pub mod cli_protonup;
+pub mod ffsync;
 pub mod firefox;
 pub mod fixes;
 pub mod launcher;
