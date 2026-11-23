@@ -23,8 +23,8 @@ fn main() -> ExitCode {
                 return ExitCode::SUCCESS;
             }
             other => {
-                const PAGES: [&str; 8] = [
-                    "home", "steam", "apps", "scripts", "storage", "health", "system", "log",
+                const PAGES: [&str; 9] = [
+                    "home", "steam", "apps", "scripts", "storage", "health", "system", "fixes", "log",
                 ];
                 if let Some(o) = other {
                     if o != "settings" && !PAGES.contains(&o) {
@@ -38,7 +38,7 @@ fn main() -> ExitCode {
                     Some("scripts") => steamdecklauncher::launcher::Section::Scripts,
                     Some("storage") => steamdecklauncher::launcher::Section::Storage,
                     Some("health") => steamdecklauncher::launcher::Section::Health,
-                    Some("system") | Some("settings") => steamdecklauncher::launcher::Section::System,
+                    Some("fixes") | Some("system") | Some("settings") => steamdecklauncher::launcher::Section::Fixes,
                     Some("log") => steamdecklauncher::launcher::Section::Log,
                     _ => steamdecklauncher::launcher::Section::Home,
                 };

@@ -1,11 +1,11 @@
-//! The one program: Home, ProtonUp, Flatseal and Settings (System + Log) as four tabs of one window.
+//! The one program: Home, ProtonUp, Flatseal, Fixes and Log as tabs of one window.
 //! Each tab has the same layout (`ui::shell`: a sidebar and a main area); this file only switches.
 use crate::ui::{
     accent_button, card_busy, nav_item, page_title, quiet_button, shell, theme, ACCENT, PAD,
     SMALL_SIZE, SPACING, TEXT_SIZE,
 };
 use crate::{
-    flatapps, health, log, proton_gui, scripts, seal_gui, steaminstalls, storage_gui, system,
+    fixes, flatapps, health, log, proton_gui, scripts, seal_gui, steaminstalls, storage_gui,
 };
 use iced::widget::{button, column, container, scrollable, text};
 use iced::{Element, Fill, Task};
@@ -28,7 +28,7 @@ pub enum Section {
     Installed,
     Storage,
     Perms,
-    System,
+    Fixes,
     Steam,
     Apps,
     Scripts,
@@ -57,7 +57,7 @@ pub enum Msg {
     UpdateEverything,
     Proton(proton_gui::Msg),
     Seal(seal_gui::Msg),
-    System(system::Msg),
+    Fixes(fixes::Msg),
     Steam(steaminstalls::Msg),
     Apps(flatapps::Msg),
     Health(health::Msg),
@@ -72,7 +72,7 @@ pub struct App {
     section: Section,
     proton: proton_gui::App,
     seal: seal_gui::App,
-    system: system::State,
+    fixes: fixes::State,
     steam: steaminstalls::State,
     apps: flatapps::State,
     health: health::State,
@@ -122,7 +122,7 @@ impl App {
         };
         let (proton, pt) = proton_gui::App::new(dir, pinned, proton_tab);
         let (seal, st) = seal_gui::App::new(start.app.clone());
-        let (system, _yt) = system::State::new();
+        let (fixes, _yt) = fixes::State::new();
         let (steam, _wt) = steaminstalls::State::new();
         let (apps, at) = flatapps::State::new();
         let (health, _ht) = health::State::new();
@@ -136,7 +136,7 @@ impl App {
             section,
             proton,
             seal,
-            system,
+            fixes,
             steam,
             apps,
             health,
@@ -192,7 +192,7 @@ impl App {
             }
             Msg::Proton(m) => self.proton.update(m).map(Msg::Proton),
             Msg::Seal(m) => self.seal.update(m).map(Msg::Seal),
-            Msg::System(m) => self.system.update(m).map(Msg::System),
+            Msg::Fixes(m) => self.fixes.update(m).map(Msg::Fixes),
             Msg::Steam(m) => self.steam.update(m).map(Msg::Steam),
             Msg::Apps(m) => self.apps.update(m).map(Msg::Apps),
             Msg::Health(m) => self.health.update(m).map(Msg::Health),
@@ -212,7 +212,7 @@ impl App {
                         iced::keyboard::Key::Character("1") => Some(Section::Home),
                         iced::keyboard::Key::Character("2") => Some(Section::Games),
                         iced::keyboard::Key::Character("3") => Some(Section::Perms),
-                        iced::keyboard::Key::Character("4") => Some(Section::System),
+                        iced::keyboard::Key::Character("4") => Some(Section::Fixes),
                         _ => None,
                     };
                     if let Some(s) = go {
@@ -241,7 +241,7 @@ impl App {
         t
     }
 
-    /// Four tabs on top (Home, ProtonUp, Flatseal, Settings); the sidebar belongs to the tab.
+    /// Tabs on top (Home, ProtonUp, Flatseal, Fixes, Log); the sidebar belongs to the tab.
     pub fn view(&self) -> Element<'_, Msg> {
         let running = self.proton.is_busy() || self.apps.is_updating();
         let nav = |label: &'static str, s: Section| nav_item(label, self.section == s, Msg::Go(s));
@@ -252,6 +252,7 @@ impl App {
             Section::Games | Section::Get | Section::Installed | Section::Storage
         );
         let in_seal = matches!(self.section, Section::Perms | Section::Apps);
+        let in_fixes = self.section == Section::Fixes;
         let in_log = self.section == Section::Log;
         let top_tab = |label: &'static str, goto: Section, on: bool| {
             let b = button(text(label).size(TEXT_SIZE))
@@ -269,6 +270,7 @@ impl App {
             top_tab("Home", Section::Home, self.section == Section::Home),
             top_tab("ProtonUp", Section::Games, in_proton),
             top_tab("Flatseal", Section::Perms, in_seal),
+            top_tab("Fixes", Section::Fixes, in_fixes),
             top_tab("Log", Section::Log, in_log),
         ]
         .spacing(SPACING)
@@ -349,9 +351,9 @@ impl App {
             ]
             .spacing(SPACING)
             .into(),
-            Section::System => column![
-                page_title("Settings: system tweaks", "Each button changes one thing in /etc and asks for your password."),
-                self.system.view().map(Msg::System),
+            Section::Fixes => column![
+                page_title("Fixes", "One-off tweaks. Each one says what is wrong and what it changes."),
+                self.fixes.view().map(Msg::Fixes),
             ]
             .spacing(SPACING)
             .into(),

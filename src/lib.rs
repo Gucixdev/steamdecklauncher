@@ -5,11 +5,12 @@
 
 pub mod cli_flatseal;
 pub mod cli_protonup;
+pub mod firefox;
+pub mod fixes;
 pub mod launcher;
 pub mod log;
 pub mod steaminstalls;
 pub mod storage_gui;
-pub mod system;
 pub mod ui;
 
 // protonup: find, download, verify and install compatibility tools; set them per game

@@ -471,10 +471,34 @@ fn the_other_pages_are_not_offered() {
     for gone in ["Settings", "Scripts", "System tweaks", "Health check"] {
         assert!(!win.has(gone), "{gone} must not be on the screen");
     }
-    for here in ["Home", "ProtonUp", "Flatseal", "Log"] {
+    for here in ["Home", "ProtonUp", "Flatseal", "Fixes", "Log"] {
         assert!(win.has(here), "{here}");
     }
     let _ = &_w.api;
+}
+
+#[test]
+fn the_fixes_tab_names_the_problem_and_the_fullscreen_fix_is_written_and_undone() {
+    let w = world();
+    let prof = w.home.join("ffprofile");
+    fs::create_dir_all(&prof).unwrap();
+    fs::write(prof.join("user.js"), "user_pref(\"mine\", 1);\n").unwrap();
+    std::env::set_var("FIREFOX_PROFILE", &prof);
+    let mut win = Window::open(Start {
+        section: Section::Fixes,
+        ..Start::default()
+    });
+    // every fix says what is wrong and what it changes
+    assert!(win.has("Video fullscreen in Gaming Mode") && win.has("OOM guard") && win.has("Swap file"));
+    assert!(win.has("Fix fullscreen") && !win.has("Undo fullscreen"));
+    win.click("Fix fullscreen");
+    let js = fs::read_to_string(prof.join("user.js")).unwrap();
+    assert!(js.contains("full-screen-api.ignore-widgets\", true"), "{js}");
+    assert!(js.contains("user_pref(\"mine\", 1);"), "the user's own line stays: {js}");
+    assert!(win.has("Undo fullscreen") && !win.has("Fix fullscreen"));
+    win.click("Undo fullscreen");
+    assert_eq!(fs::read_to_string(prof.join("user.js")).unwrap(), "user_pref(\"mine\", 1);\n");
+    std::env::remove_var("FIREFOX_PROFILE");
 }
 
 #[test]
